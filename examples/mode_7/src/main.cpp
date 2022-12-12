@@ -16,6 +16,7 @@
 #include "bn_affine_bg_dy_register_hbe_ptr.h"
 #include "bn_window.h"
 #include "bn_rect_window.h"
+#include "bn_log.h"
 
 #include "bn_affine_bg_items_land.h"
 #include "bn_regular_bg_items_background.h"
@@ -243,7 +244,7 @@ namespace
         int sf = camera.sf.data() >> 4;
         int ct= camera.ct.data() >> 4;
         int st= camera.st.data() >> 4;
-        int horiz=0;
+        int horiz=-1;
         if(camera.ct.data() != 0) // camera.ct = camup.y in camera coord
         {
             horiz= M7_FAR_BG*camera.st.data() - camera.y.data();
@@ -253,7 +254,7 @@ namespace
         {
             horiz= camera.st.data() > 0 ? INT_MIN : INT_MAX;
         }
-
+		BN_LOG(horiz);
         for(int index = 0; index < bn::display::height(); ++index)
         {
             if(index<horiz)
@@ -356,12 +357,12 @@ void advanced_mode7_scene(bn::sprite_text_generator text_generator)
 
     int dy_values[bn::display::height()];
     bn::affine_bg_dy_register_hbe_ptr dy_hbe = bn::affine_bg_dy_register_hbe_ptr::create(bg, dy_values);
-	
-	bn::window outside_window = bn::window::outside();
+    
+    bn::window outside_window = bn::window::outside();
     outside_window.set_show_bg(backdrop, false);
-	bn::rect_window internal_window = bn::rect_window::internal();
-	internal_window.set_boundaries(-80, -120, 80, 120);
-	internal_window.set_show_bg(backdrop, true);
+    bn::rect_window internal_window = bn::rect_window::internal();
+    internal_window.set_boundaries(-80, -120, 80, 120);
+    internal_window.set_show_bg(backdrop, true);
 
 
 
@@ -374,10 +375,14 @@ void advanced_mode7_scene(bn::sprite_text_generator text_generator)
         int horiz = update_hbe_values_with_pitch(camera, pa_values, pc_values, dx_values, dy_values);
         backdrop.set_y(horiz-80-backdrop.dimensions().height()/2);
         backdrop.set_x(-camera.phi);
-		if(horiz >= 0 && horiz < 160)
-			internal_window.set_bottom(-80+horiz);
-		else
-			internal_window.set_bottom(0);
+        if(horiz > 0 && horiz < INT_MAX)
+        {
+            internal_window.set_bottom(-80+horiz);
+        }
+        else
+        {
+            internal_window.set_bottom(-80);
+        }
 
         pa_hbe.reload_values_ref();
         pc_hbe.reload_values_ref();
@@ -387,6 +392,7 @@ void advanced_mode7_scene(bn::sprite_text_generator text_generator)
         bn::core::update();
     }
 }
+
 int main()
 {
     bn::core::init();
